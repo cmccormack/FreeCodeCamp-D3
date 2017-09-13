@@ -1,0 +1,28 @@
+{
+  "name": "freecodecamp-d3",
+  "author": "Chris McCormack https://mackville.net/",
+  "description": "D3 Projects for Free Code Camp Data Visualization Certification",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmccormack/FreeCodeCamp-D3.git"
+  },
+  "keywords": [
+    "D3", "React", "Bootstrap"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cmccormack/FreeCodeCamp-D3/issues"
+  },
+  "homepage": "https://github.com/cmccormack/FreeCodeCamp-D3#readme",
+  "scripts": {
+    "dev": "webpack -d --watch",
+    "build": "npm run clean && webpack --env.production -p --colors --progress",
+    "start": "webpack-dev-server --env.development --colors --progress",
+    "clean": "rimraf ./dist/*"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2"
+  }
+}
