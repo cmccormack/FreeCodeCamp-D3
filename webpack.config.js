@@ -1,119 +1,152 @@
-/*eslint-env node*/
-/*eslint no-console: 'off'*/
+/* eslint-env node */
+/* eslint no-console: 'off' */
 
 const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const bootstrapEntryPoints = require('./webpack.bootstrap.config')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+// const bootstrapEntryPoints = require('./webpack.bootstrap.config') // Removed while testing
 const CompressionPlugin = require('compression-webpack-plugin')
 
-const useSourceMap = true
-const prodSourceMap = 'cheap-module-source-map'
-const devSourceMap = 'eval-cheap-module-source-map'
+// Enable or disable source mapping and set production and development source map types
+const useDevSourceMap = true
+const useProdSourceMap = true
+const devSourceMapType = useDevSourceMap && 'eval-source-map'
+const prodSourceMapType = useProdSourceMap && 'source-map'
+
+// Enable or disable BundleAnalyzerPlugin
+const useAnalyzer = false
 
 // ExtractTextPlugin does not work with HotModuleReplacement
-const cssDev = ['style-loader','css-loader', 'sass-loader']
+const cssDev = ['style-loader', 'css-loader', 'sass-loader']
 const cssProd = ExtractTextPlugin.extract({
   fallback: 'style-loader',
   use: ['css-loader', 'sass-loader'],
-  publicPath: '../'
+  // publicPath: '../'
 })
 
-module.exports = (env = {}) =>{
-  console.log('env: ' + JSON.stringify(env) )
-  console.log('Development: ' + env.development)
-  console.log('Production: ' + env.production)
+const environmentDependentPlugins = env =>
+  (env.production
+    ? [
+      new webpack.optimize.UglifyJsPlugin({
+        sourceMap: useProdSourceMap, // false disables source mapping set by devtool
+      }),
+      new webpack.DefinePlugin({
+        'process.env': {
+          NODE_ENV: JSON.stringify('production'),
+        },
+      }),
+      new webpack.optimize.CommonsChunkPlugin('common.js'),
+    ]
+    : [
+      new webpack.HotModuleReplacementPlugin(),
+    ])
+
+module.exports = (env = {}) => {
+  console.log(`env: ${JSON.stringify(env)}`)
+  console.log(`Development: ${env.development}`)
+  console.log(`Production: ${env.production}`)
+
+  const sourceMap = env.production ? prodSourceMapType : devSourceMapType
 
   return {
     entry: {
       app: './src/index.js',
-      bootstrap: env.production ? bootstrapEntryPoints.prod : bootstrapEntryPoints.dev
+    // bootstrap: env.production ? bootstrapEntryPoints.prod : bootstrapEntryPoints.dev, // Testing
     },
     output: {
-      path: path.resolve(__dirname, 'dist'),
-      filename: '[name].bundle.js'
+      path: path.resolve(__dirname, 'build'),
+      filename: '[name].bundle.js',
     },
     module: {
       rules: [
+
+        // eslint loader rule
         {
           enforce: 'pre',
-          test: /\.jsx?$/i, 
+          test: /\.jsx?$/i,
           include: path.resolve(__dirname, 'src'),
           exclude: /node_modules/,
           use: {
             loader: 'eslint-loader',
             options: {
               fix: true,
-              cache: true
-            }
-          }
+              cache: true,
+            },
+          },
         },
+        // babel loader rule
         {
-          test: /\.jsx?$/i, 
+          test: /\.jsx?$/i,
           include: path.resolve(__dirname, 'src'),
           exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
             options: {
-              presets: ['es2015', 'react', 'env']
-            }
-          }
+              // presets: ['react', 'env'], // react disabled temporarily while testing
+              presets: ['env'],
+            },
+          },
         },
+        // CSS/SCSS loader rules
         {
           test: /\.s?css$/,
-          use: env.production ? cssProd : cssDev
+          use: env.production ? cssProd : cssDev,
         },
+        // image loader rules
         {
           test: /\.(png|ico|jpe?g|gif)$/i,
           use: [
             'file-loader?name=images/[name].[ext]',
-            'image-webpack-loader'
-          ]
+            'image-webpack-loader',
+          ],
         },
-        { 
+        // 
+        {
           test: /\.(woff2?|svg)$/,
-          use: 'url-loader?limit=10000&name=fonts/[name].[ext]' 
+          // inline base64 URLs for <=8k files, direct URLs for the rest
+          use: 'url-loader?limit=8192&name=fonts/[name].[ext]',
         },
-        { 
-          test: /\.(ttf|eot)$/,
-          use: 'file-loader?name=fonts/[name].[ext]' 
-        }
-      ]
+        {
+          test: /\.(ttf|eot)$/, use: 'file-loader?name=fonts/[name].[ext]',
+        },
+      ],
     },
-    devtool: useSourceMap && env.production ? prodSourceMap : devSourceMap,
-    devServer: {                      // Settings for webpack-dev-server
+    devtool: sourceMap,
+
+    devServer: { // Settings for webpack-dev-server
       port: process.env.PORT || 8080, // Tells the server which port to listen on 
-      contentBase: './src',           // Tells the server where to serve content from
-      compress: true,                 // Enable gzip compression for everything served
-      stats: 'minimal',               // Only output when errors or new compilation happen
-      open: true,                     // The dev server will open the browser when ran
-      hot: true,                      // Enable webpack's Hot Module Replacement feature
-      overlay: {                      // WDS overlay for capturing warnings and errors
+      contentBase: './src', // Tells the server where to serve content from
+      compress: true, // Enable gzip compression for everything served
+      stats: 'minimal', // Only output when errors or new compilation happen
+      open: true, // The dev server will open the browser when ran
+      hot: true, // Enable webpack's Hot Module Replacement feature
+      overlay: { // WDS overlay for capturing warnings and errors
         errors: true,
-        warnings: false
-      }
+        warnings: false,
+      },
     },
 
-    plugins: [
+    plugins: ([
       new webpack.optimize.ModuleConcatenationPlugin(),
       new HtmlWebpackPlugin({
-        title: 'Global Meteorite Landings - Chris McCormack',
+        title: '[Some Title] - Chris McCormack',
         favicon: './src/images/favicon.ico',
         minify: {
-          collapseWhitespace: true
+          collapseWhitespace: true,
         },
-        template: './src/index.html'
+        template: './src/index.html',
       }),
 
       new ExtractTextPlugin({
         filename: './styles/[name].css',
         disable: !env.production,
-        allChunks: true
+        allChunks: true,
       }),
-      // new BundleAnalyzerPlugin(),
-      new webpack.HotModuleReplacementPlugin(),
+      new BundleAnalyzerPlugin({
+        analyzerMode: useAnalyzer ? 'server' : 'disabled',
+      }),
       new webpack.NamedModulesPlugin(),
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
       new CompressionPlugin({
@@ -121,15 +154,8 @@ module.exports = (env = {}) =>{
         algorithm: 'gzip',
         test: /\.(js|html|css)$/,
         threshold: 10240,
-        minRatio: 0.8
+        minRatio: 0.8,
       }),
-      new webpack.DefinePlugin({
-        'process.env': {
-          NODE_ENV: JSON.stringify('production')
-        }
-      }),
-      // Disabled for now, slows down dev build
-      // new webpack.optimize.UglifyJsPlugin()
-    ]
+    ]).concat(environmentDependentPlugins(env)),
   }
 }
