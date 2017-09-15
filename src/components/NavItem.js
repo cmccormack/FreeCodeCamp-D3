@@ -1,7 +1,4 @@
-/* eslint-env node */
-/* eslint react/sort-prop-types: "off" */
-/* eslint react/forbid-prop-types: "off" */
-
+/* eslint-disable */
 
 exports.__esModule = true
 
