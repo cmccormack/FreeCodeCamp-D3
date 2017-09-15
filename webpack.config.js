@@ -23,7 +23,7 @@ const cssDev = ['style-loader', 'css-loader', 'sass-loader']
 const cssProd = ExtractTextPlugin.extract({
   fallback: 'style-loader',
   use: ['css-loader', 'sass-loader'],
-  // publicPath: '../'
+  publicPath: '../',
 })
 
 const environmentDependentPlugins = env =>
