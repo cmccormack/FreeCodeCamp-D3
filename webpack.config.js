@@ -6,7 +6,7 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-// const bootstrapEntryPoints = require('./webpack.bootstrap.config') // Removed while testing
+const bootstrapEntryPoints = require('./webpack.bootstrap.config')
 const CompressionPlugin = require('compression-webpack-plugin')
 
 // Enable or disable source mapping and set production and development source map types
@@ -52,12 +52,15 @@ module.exports = (env = {}) => {
 
   return {
     entry: {
-      app: './src/index.js',
-    // bootstrap: env.production ? bootstrapEntryPoints.prod : bootstrapEntryPoints.dev, // Testing
+      app: './src/index.jsx',
+      bootstrap: env.production ? bootstrapEntryPoints.prod : bootstrapEntryPoints.dev,
     },
     output: {
       path: path.resolve(__dirname, 'build'),
       filename: '[name].bundle.js',
+    },
+    resolve: {
+      extensions: ['*', '.js', '.jsx'],
     },
     module: {
       rules: [
@@ -84,8 +87,7 @@ module.exports = (env = {}) => {
           use: {
             loader: 'babel-loader',
             options: {
-              // presets: ['react', 'env'], // react disabled temporarily while testing
-              presets: ['env'],
+              presets: ['react', 'env'],
             },
           },
         },
@@ -122,6 +124,7 @@ module.exports = (env = {}) => {
       stats: 'minimal', // Only output when errors or new compilation happen
       open: true, // The dev server will open the browser when ran
       hot: true, // Enable webpack's Hot Module Replacement feature
+      historyApiFallback: true,
       overlay: { // WDS overlay for capturing warnings and errors
         errors: true,
         warnings: false,
