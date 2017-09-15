@@ -1,35 +1,39 @@
 /* eslint no-console: 'off' */
 
 import React from 'react'
-import { Switch, Link } from 'react-router-dom'
+import { Switch } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import 'font-awesome/css/font-awesome.css'
 
-// import { Header } from './layout'
+import Header from './layout/Header'
 
 
 const App = (props) => {
-  console.log(props.children)
   console.log('in app')
 
-  const ulStyle = {
-    listStyle: 'none',
+  const options = {
+    header: {
+      brand: {
+        title: '[ Title ]',
+        icon: { class: 'fa fa-lg fa-fw fa-beer', height: '0.7' },
+        url: 'https://mackville.net',
+      },
+      navItems: [
+        { name: 'Home', url: '/' },
+        { name: 'Contact', url: '/contact' },
+        { name: 'About', url: '/about' },
+      ],
+    },
   }
-  const liStyle = {
-    display: 'inline',
-    marginRight: '5px',
-  }
+
   return (
     <div>
-      <ul style={ulStyle}>
-        <li style={liStyle}><Link to={'/'}>{'Home'}</Link></li>
-        <li style={liStyle}><Link to={'/contact'}>{'Contact'}</Link></li>
-        <li style={liStyle}><Link to={'/about'}>{'About'}</Link></li>
-      </ul>
-      <hr />
-      <Switch>
-        {props.children}
-      </Switch>
-      <hr />
+      <Header {...options.header} />
+      <main style={{ marginTop: '52px', padding: '20px' }}>
+        <Switch>
+          {props.children}
+        </Switch>
+      </main>
     </div>
   )
 }
